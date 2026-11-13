@@ -172,7 +172,7 @@ async function api(path, opts) {
 }
 
 async function refresh() {
-  try { state = await api('/api/state'); } catch (e) { return; }
+  try { state = await api('api/state'); } catch (e) { return; }
   renderRepos(); renderRuns();
 }
 
@@ -233,7 +233,7 @@ function renderRuns() {
 async function showLog(id, silent) {
   selectedRun = id;
   try {
-    const run = await api('/api/runs/' + id);
+    const run = await api('api/runs/' + id);
     $('log').style.display = 'block';
     $('log').textContent = (run.log || []).join('\n') || '…';
     $('log').scrollTop = $('log').scrollHeight;
@@ -246,7 +246,7 @@ async function addRepo() {
   if (!url) return toast('Вставьте ссылку на репозиторий', true);
   $('add-msg').textContent = 'Добавляю (клон при необходимости)…';
   try {
-    const j = await api('/api/repos', { method: 'POST', body: JSON.stringify({
+    const j = await api('api/repos', { method: 'POST', body: JSON.stringify({
       url, token: $('add-token').value.trim(),
       service: $('add-service').value.trim(), cloneDir: $('add-clone').value.trim() || undefined,
       defaultRef: $('add-ref').value.trim() || undefined }) });
@@ -259,13 +259,13 @@ async function addRepo() {
 
 async function delRepo(id) {
   if (!confirm('Убрать репозиторий из списка? Каталог клона на диске не удаляется.')) return;
-  try { await api('/api/repos/' + id, { method: 'DELETE' }); toast('Убран'); refresh(); }
+  try { await api('api/repos/' + id, { method: 'DELETE' }); toast('Убран'); refresh(); }
   catch (e) { toast(e.message, true); }
 }
 
 async function testRepo(id) {
   toast('Проверяю доступ…');
-  try { const j = await api(`/api/repos/${id}/test`, { method: 'POST' }); toast(j.ok ? '✓ ' + j.message : '✗ ' + j.message, !j.ok); }
+  try { const j = await api(`api/repos/${id}/test`, { method: 'POST' }); toast(j.ok ? '✓ ' + j.message : '✗ ' + j.message, !j.ok); }
   catch (e) { toast(e.message, true); }
 }
 
@@ -273,7 +273,7 @@ async function loadRefs(id) {
   const box = $('refs-' + id);
   box.textContent = 'Загружаю…';
   try {
-    const j = await api(`/api/repos/${id}/refs`);
+    const j = await api(`api/repos/${id}/refs`);
     if (j.error) { box.textContent = '✗ ' + j.error; return; }
     const top = j.refs.slice(0, 40);
     box.innerHTML = 'Ветки/теги (клик — подставить): ' + top.map(r =>
@@ -286,7 +286,7 @@ async function deploy(id) {
   const dryRun = $('dry-' + id).checked;
   if (!confirm(`Деплой ${ref}${dryRun ? ' (dry-run)' : ''} — запускаю?`)) return;
   try {
-    const j = await api(`/api/repos/${id}/deploy`, { method: 'POST', body: JSON.stringify({ ref, dryRun }) });
+    const j = await api(`api/repos/${id}/deploy`, { method: 'POST', body: JSON.stringify({ ref, dryRun }) });
     selectedRun = j.runId; toast('Запущено'); refresh();
   } catch (e) { toast(e.message, true); }
 }

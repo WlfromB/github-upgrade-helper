@@ -78,6 +78,33 @@ config.json          # настройки (gitignore, создаётся при 
 процесс. По умолчанию слушает только localhost — открывайте наружу лишь за паролем
 (`settings.password`) и HTTPS/VPN. Токены в UI не отображаются.
 
+## Публичный доступ через nginx (обезличенный пример)
+
+Приложение умеет работать под под-путём за reverse-proxy (UI использует относительные
+пути), поэтому его можно «подключить наружу» без отдельного домена и без правки кода:
+
+```nginx
+# в server {} вашего HTTPS-сайта (example.com — ваш домен)
+location = /upgrade-helper { return 301 /upgrade-helper/; }
+
+location /upgrade-helper/ {
+    auth_basic "github-upgrade-helper";                 # первый рубеж
+    auth_basic_user_file /etc/nginx/.htpasswd.upgrade;  # htpasswd -c ... admin
+    limit_req zone=helper burst=5 nodelay;              # зона объявлена в http{}
+    proxy_pass http://127.0.0.1:8790/;                  # слэш в конце срезает префикс
+    include snippets/proxy-common.conf;                 # Host/X-Real-IP/X-Forwarded-*
+    proxy_read_timeout 600s;
+}
+
+# зона rate-limit — на уровне http{} (например, в начале файла сайта):
+# limit_req_zone $binary_remote_addr zone=helper:10m rate=1r/s;
+```
+
+Создание пароля: `htpasswd -c /etc/nginx/.htpasswd.upgrade admin` (или
+`openssl passwd -apr1`). Само приложение при этом остаётся на `127.0.0.1` —
+снаружи виден только nginx. Рекомендуемый доступ — HTTPS + basic-auth; при
+повышенных требованиях добавьте `allow <ваш IP>; deny all;` в location.
+
 ## Пара к скриптам в репозиториях
 
 В каждом репозитории проекта лежит `scripts/deploy.sh` (ветка `chore/deploy-scripts`) —

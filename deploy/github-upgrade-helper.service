@@ -1,0 +1,16 @@
+[Unit]
+Description=github-upgrade-helper (деплой репозиториев без GitHub Actions)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/github-upgrade-helper
+ExecStart=/usr/bin/python3 /opt/github-upgrade-helper/server.py
+Restart=on-failure
+RestartSec=5
+# деплои запускают git/docker — нужен доступ к docker-сокету (группа docker)
+# и к клонам в /opt (при необходимости поменяйте User=)
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>github-upgrade-helper</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --card2: #273449; --line: #334155;
+    --text: #e2e8f0; --muted: #94a3b8; --acc: #38bdf8; --ok: #4ade80;
+    --warn: #fbbf24; --err: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h1 .tag { color: var(--acc); }
+  .sub { color: var(--muted); margin-bottom: 20px; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; }
+  summary { cursor: pointer; font-weight: 600; font-size: 16px; }
+  details h3 { font-size: 14px; margin: 16px 0 6px; color: var(--acc); }
+  details code, td code, .mono { background: #0b1220; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 13px; }
+  details p, details li { color: #cbd5e1; font-size: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 16px; margin: 0 0 12px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+  input[type=text], input[type=password] { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: #0b1220; color: var(--text); font-size: 14px; }
+  input:focus { outline: 1px solid var(--acc); }
+  button { border: 0; border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: pointer; background: var(--card2); color: var(--text); }
+  button:hover { filter: brightness(1.15); }
+  button.primary { background: var(--acc); color: #082032; }
+  button.danger { background: transparent; border: 1px solid var(--err); color: var(--err); }
+  button.small { padding: 5px 10px; font-size: 13px; font-weight: 500; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+  .row > div { flex: 1; min-width: 120px; }
+  .repos { display: grid; gap: 12px; }
+  .repo { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .repo .head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .repo .name { font-weight: 700; font-size: 15px; }
+  .repo .slug { color: var(--muted); font-size: 13px; }
+  .repo .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+  .repo .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .repo .actions input { width: 200px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .b-ok { background: rgba(74,222,128,.15); color: var(--ok); }
+  .b-failed { background: rgba(248,113,113,.15); color: var(--err); }
+  .b-running { background: rgba(56,189,248,.15); color: var(--acc); }
+  .b-queued { background: rgba(148,163,184,.15); color: var(--muted); }
+  .runs { margin-top: 18px; }
+  .run { border-top: 1px solid var(--line); padding: 10px 4px; cursor: pointer; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 13.5px; }
+  .run:hover { background: var(--card2); }
+  .run .t { color: var(--muted); width: 130px; }
+  pre#log { background: #0b1220; border: 1px solid var(--line); border-radius: 10px; padding: 14px; font-size: 12.5px; line-height: 1.5; overflow: auto; max-height: 460px; white-space: pre-wrap; margin-top: 12px; }
+  .toast { position: fixed; bottom: 18px; right: 18px; background: var(--card2); border: 1px solid var(--line); border-left: 4px solid var(--acc); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: 420px; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+  .toast.err { border-left-color: var(--err); }
+  .hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .empty { color: var(--muted); font-size: 14px; padding: 8px 2px; }
+  .chk { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .refs { margin-top: 8px; font-size: 13px; color: var(--muted); max-height: 120px; overflow: auto; }
+  .refs span { display: inline-block; background: #0b1220; border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; margin: 2px; cursor: pointer; }
+  .refs span:hover { border-color: var(--acc); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🚀 github<span class="tag">-upgrade-</span>helper</h1>
+  <div class="sub">Деплой репозиториев на этот сервер без GitHub Actions: fetch → checkout → docker compose → health-check. Один запуск за раз, логи ниже.</div>
+
+  <!-- ── ИНСТРУКЦИЯ ─────────────────────────────────────────────── -->
+  <details open id="help">
+    <summary>📖 Как пользоваться (инструкция)</summary>
+
+    <h3>1. Первый запуск на сервере</h3>
+    <p>Нужны Python 3.9+, git, docker compose и клоны репозиториев (для проекта WlfromB они уже в <code>/opt/*</code>).</p>
+    <p class="mono">git clone https://github.com/WlfromB/github-upgrade-helper.git /opt/github-upgrade-helper<br>
+       cd /opt/github-upgrade-helper &amp;&amp; python3 server.py</p>
+    <p>Откроется <code>http://127.0.0.1:8790</code> (или SSH-туннель: <code>ssh -L 8790:127.0.0.1:8790 root@сервер</code>).
+       Для автозапуска — systemd: <code>sudo cp deploy/github-upgrade-helper.service /etc/systemd/system/ &amp;&amp; sudo systemctl enable --now github-upgrade-helper</code>.</p>
+
+    <h3>2. Приватные репозитории — токен</h3>
+    <p>Создайте Personal Access Token: GitHub → Settings → Developer settings → Personal access tokens → <b>classic</b>, галочка <b>repo</b>.
+       Вставьте токен в поле «Токен» при добавлении репозитория (или один раз в <code>config.json → settings.githubToken</code>).
+       Токен нужен только если у сервера нет SSH-ключа с доступом к репозиторию.</p>
+
+    <h3>3. Добавление репозитория</h3>
+    <p>Вставьте ссылку в любом виде — <code>https://github.com/WlfromB/fitness-frontend</code>, <code>git@github.com:…</code> или просто <code>owner/name</code>.
+       Если клона ещё нет — он создастся в <code>settings.workspaceRoot</code> (по умолчанию <code>/opt</code>). Для известных репозиториев WlfromB
+       compose-сервис и health-проверка подставятся сами.</p>
+
+    <h3>4. Деплой</h3>
+    <p>У карточки репозитория введите ветку/тег/SHA (по умолчанию — <code>main</code>) и нажмите «Деплой».
+       Что произойдёт: <code>git fetch → checkout → docker compose build SERVICE → up -d --force-recreate → health-check</code>.
+       Галочка «dry-run» — только обновить исходники и показать коммит, контейнеры не трогать (безопасно для проверки).</p>
+
+    <h3>5. Откат</h3>
+    <p>Отката «кнопкой назад» нет намеренно: просто запустите деплой снова с прежним ref (тегом/коммитом/веткой). Пример: катили <code>feature/x</code> —
+       вернитесь деплоем <code>main</code>. История запусков (с ref и коммитом) — в разделе «Запуски».</p>
+
+    <h3>6. Безопасность</h3>
+    <p>Приложение выполняет команды git/docker на сервере, поэтому: по умолчанию слушает только <code>127.0.0.1</code> (снаружи не видно);
+       задайте пароль в <code>config.json → settings.password</code>, если открываете наружу; не открывайте порт без HTTPS/VPN.
+       Токены хранятся в <code>config.json</code> на сервере и не показываются в UI.</p>
+  </details>
+
+  <!-- ── ДОБАВИТЬ РЕПО ──────────────────────────────────────────── -->
+  <div class="card">
+    <h2>➕ Добавить репозиторий</h2>
+    <div class="grid">
+      <div>
+        <label>Ссылка на репозиторий (github.com/owner/name, можно приватный)</label>
+        <input type="text" id="add-url" placeholder="https://github.com/WlfromB/fitness-frontend">
+      </div>
+      <div>
+        <label>Токен для приватного (PAT, scope: repo) — если нет SSH-ключа на сервере</label>
+        <input type="password" id="add-token" placeholder="ghp_… (необязательно)">
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div style="max-width:220px">
+        <label>Compose-сервис (можно несколько через пробел)</label>
+        <input type="text" id="add-service" placeholder="авто">
+      </div>
+      <div style="max-width:160px">
+        <label>Каталог клона</label>
+        <input type="text" id="add-clone" placeholder="/opt/<имя>">
+      </div>
+      <div style="max-width:120px">
+        <label>REF по умолчанию</label>
+        <input type="text" id="add-ref" placeholder="main">
+      </div>
+      <div style="flex:0">
+        <button class="primary" onclick="addRepo()">Добавить</button>
+      </div>
+    </div>
+    <div class="hint" id="add-msg"></div>
+  </div>
+
+  <!-- ── РЕПОЗИТОРИИ ────────────────────────────────────────────── -->
+  <div class="card">
+    <h2>📦 Репозитории (<span id="repo-count">0</span>)</h2>
+    <div class="repos" id="repos"><div class="empty">Пока пусто — добавьте первый репозиторий выше.</div></div>
+  </div>
+
+  <!-- ── ЗАПУСКИ ────────────────────────────────────────────────── -->
+  <div class="card runs">
+    <h2>🗂 Запуски</h2>
+    <div id="runs"><div class="empty">Ещё ничего не запускалось.</div></div>
+    <pre id="log" style="display:none"></pre>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let state = { repos: [], runs: [], settings: {} };
+let selectedRun = null;
+
+function toast(msg, isErr) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' err' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 6000);
+}
+
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts || {}));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  return j;
+}
+
+async function refresh() {
+  try { state = await api('/api/state'); } catch (e) { return; }
+  renderRepos(); renderRuns();
+}
+
+function badge(s) {
+  const map = { ok: 'b-ok', failed: 'b-failed', running: 'b-running', queued: 'b-queued' };
+  const txt = { ok: '✓ успех', failed: '✗ провал', running: '⟳ идёт', queued: '… в очереди' }[s] || s;
+  return `<span class="badge ${map[s] || 'b-queued'}">${txt}</span>`;
+}
+
+function renderRepos() {
+  $('repo-count').textContent = state.repos.length;
+  const box = $('repos');
+  if (!state.repos.length) { box.innerHTML = '<div class="empty">Пока пусто — добавьте первый репозиторий выше.</div>'; return; }
+  box.innerHTML = state.repos.map(r => {
+    const runs = state.runs.filter(x => x.repoId === r.id);
+    const last = runs[0];
+    return `<div class="repo" id="repo-${r.id}">
+      <div class="head">
+        <div>
+          <span class="name">${r.name}</span> <span class="slug">${r.slug}</span>
+          ${last ? badge(last.status) : ''}
+          ${r.hasToken ? '<span class="badge b-queued">🔑 токен</span>' : ''}
+          ${r.mode === 'infra' ? '<span class="badge b-queued">infra</span>' : ''}
+        </div>
+        <div>
+          <button class="small" onclick="testRepo('${r.id}')">Тест доступа</button>
+          <button class="small" onclick="loadRefs('${r.id}')">Ветки</button>
+          <button class="small danger" onclick="delRepo('${r.id}')">Убрать</button>
+        </div>
+      </div>
+      <div class="meta">клон: <code>${r.cloneDir}</code> · сервис: <code>${r.service || '—'}</code> · health: <code>${r.healthUrl || '—'}</code></div>
+      <div class="actions">
+        <input type="text" id="ref-${r.id}" placeholder="ref (ветка/тег/SHA)" value="${r.defaultRef || 'main'}">
+        <button class="primary small" onclick="deploy('${r.id}')">Деплой</button>
+        <label class="chk"><input type="checkbox" id="dry-${r.id}"> dry-run</label>
+      </div>
+      <div class="refs" id="refs-${r.id}"></div>
+    </div>`;
+  }).join('');
+}
+
+function renderRuns() {
+  const box = $('runs');
+  if (!state.runs.length) { box.innerHTML = '<div class="empty">Ещё ничего не запускалось.</div>'; return; }
+  box.innerHTML = state.runs.map(r => `
+    <div class="run" onclick="showLog('${r.id}')">
+      <span class="t">${new Date((r.startedAt || 0) * 1000).toLocaleTimeString()}</span>
+      <b>${r.repoName}</b>
+      <code>${r.ref}</code>
+      ${r.dryRun ? '<span class="badge b-queued">dry-run</span>' : ''}
+      ${badge(r.status)}
+    </div>`).join('');
+  const active = state.runs.find(r => r.status === 'running' || r.status === 'queued');
+  if (selectedRun) showLog(selectedRun, true);
+  if (active) setTimeout(refresh, 2000);
+}
+
+async function showLog(id, silent) {
+  selectedRun = id;
+  try {
+    const run = await api('/api/runs/' + id);
+    $('log').style.display = 'block';
+    $('log').textContent = (run.log || []).join('\n') || '…';
+    $('log').scrollTop = $('log').scrollHeight;
+    if (!silent && (run.status === 'running' || run.status === 'queued')) setTimeout(refresh, 2000);
+  } catch (e) { toast(e.message, true); }
+}
+
+async function addRepo() {
+  const url = $('add-url').value.trim();
+  if (!url) return toast('Вставьте ссылку на репозиторий', true);
+  $('add-msg').textContent = 'Добавляю (клон при необходимости)…';
+  try {
+    const j = await api('/api/repos', { method: 'POST', body: JSON.stringify({
+      url, token: $('add-token').value.trim(),
+      service: $('add-service').value.trim(), cloneDir: $('add-clone').value.trim() || undefined,
+      defaultRef: $('add-ref').value.trim() || undefined }) });
+    $('add-url').value = ''; $('add-token').value = '';
+    $('add-msg').textContent = '';
+    toast(`Добавлен ${j.repo.slug} (${j.repo.note || 'готов'})`);
+    refresh();
+  } catch (e) { $('add-msg').textContent = ''; toast(e.message, true); }
+}
+
+async function delRepo(id) {
+  if (!confirm('Убрать репозиторий из списка? Каталог клона на диске не удаляется.')) return;
+  try { await api('/api/repos/' + id, { method: 'DELETE' }); toast('Убран'); refresh(); }
+  catch (e) { toast(e.message, true); }
+}
+
+async function testRepo(id) {
+  toast('Проверяю доступ…');
+  try { const j = await api(`/api/repos/${id}/test`, { method: 'POST' }); toast(j.ok ? '✓ ' + j.message : '✗ ' + j.message, !j.ok); }
+  catch (e) { toast(e.message, true); }
+}
+
+async function loadRefs(id) {
+  const box = $('refs-' + id);
+  box.textContent = 'Загружаю…';
+  try {
+    const j = await api(`/api/repos/${id}/refs`);
+    if (j.error) { box.textContent = '✗ ' + j.error; return; }
+    const top = j.refs.slice(0, 40);
+    box.innerHTML = 'Ветки/теги (клик — подставить): ' + top.map(r =>
+      `<span onclick="document.getElementById('ref-${id}').value='${r.ref}'">${r.ref}</span>`).join('');
+  } catch (e) { box.textContent = '✗ ' + e.message; }
+}
+
+async function deploy(id) {
+  const ref = $('ref-' + id).value.trim() || 'main';
+  const dryRun = $('dry-' + id).checked;
+  if (!confirm(`Деплой ${ref}${dryRun ? ' (dry-run)' : ''} — запускаю?`)) return;
+  try {
+    const j = await api(`/api/repos/${id}/deploy`, { method: 'POST', body: JSON.stringify({ ref, dryRun }) });
+    selectedRun = j.runId; toast('Запущено'); refresh();
+  } catch (e) { toast(e.message, true); }
+}
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

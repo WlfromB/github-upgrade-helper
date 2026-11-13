@@ -44,7 +44,7 @@ WELL_KNOWN = {
     "decision-service": ("decision-app", "http://127.0.0.1:8084/actuator/health", '"status":"UP"', "service"),
     "telegram-queue-gateway": ("telegram-gateway", "http://127.0.0.1:8086/health", '"status":"UP"', "service"),
     "webpush-python-service": ("push-gateway", "http://127.0.0.1:8087/health", '"status":"UP"', "service"),
-    "accumulate-queue": ("aq-liquibase-authdb aq-liquibase-notifdb", "", "", "infra"),
+    "accumulate-queue": ("liquibase-authdb liquibase-notifdb", "", "", "infra"),
 }
 
 DEFAULT_CONFIG = {

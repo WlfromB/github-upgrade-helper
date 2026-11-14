@@ -44,7 +44,7 @@ WELL_KNOWN = {
     "decision-service": ("decision-app", "http://127.0.0.1:8084/actuator/health", '"status":"UP"', "service"),
     "telegram-queue-gateway": ("telegram-gateway", "http://127.0.0.1:8086/health", '"status":"UP"', "service"),
     "webpush-python-service": ("push-gateway", "http://127.0.0.1:8087/health", '"status":"UP"', "service"),
-    "accumulate-queue": ("aq-liquibase-authdb aq-liquibase-notifdb", "", "", "infra"),
+    "accumulate-queue": ("liquibase-authdb liquibase-notifdb", "", "", "infra"),
 }
 
 DEFAULT_CONFIG = {
@@ -311,7 +311,7 @@ class Handler(BaseHTTPRequestHandler):
             with _lock:
                 runs = sorted(_runs.values(), key=lambda r: r["startedAt"] or 0, reverse=True)[:20]
             self._json(200, {
-                "settings": {k: v for k, v in cfg["settings"].items() if k != "password"} | {"hasPassword": bool(cfg["settings"].get("password"))},
+                "settings": {k: v for k, v in cfg["settings"].items() if k not in ("password", "githubToken")} | {"hasPassword": bool(cfg["settings"].get("password")), "hasGithubToken": bool(cfg["settings"].get("githubToken"))},
                 "repos": [sanitize_repo(r) for r in cfg["repos"]],
                 "runs": runs,
             })

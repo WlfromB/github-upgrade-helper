@@ -311,7 +311,7 @@ class Handler(BaseHTTPRequestHandler):
             with _lock:
                 runs = sorted(_runs.values(), key=lambda r: r["startedAt"] or 0, reverse=True)[:20]
             self._json(200, {
-                "settings": {k: v for k, v in cfg["settings"].items() if k != "password"} | {"hasPassword": bool(cfg["settings"].get("password"))},
+                "settings": {k: v for k, v in cfg["settings"].items() if k not in ("password", "githubToken")} | {"hasPassword": bool(cfg["settings"].get("password")), "hasGithubToken": bool(cfg["settings"].get("githubToken"))},
                 "repos": [sanitize_repo(r) for r in cfg["repos"]],
                 "runs": runs,
             })

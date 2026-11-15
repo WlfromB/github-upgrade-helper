@@ -36,14 +36,18 @@ REF_RE = re.compile(r"^[A-Za-z0-9._/-]+$")
 
 # Известные проекты WlfromB: авто-подсказки compose-сервиса и health-проверки
 # при добавлении репозитория (можно поменять в UI после добавления).
+# После миграции прода на blue-green (accumulate-queue scripts/migrate-to-bg.sh)
+# health-порты сервисов держит роутер на 127.0.0.2 (127.0.0.1 — инфраструктура);
+# существующим репо в config.json healthUrl меняется отдельно при миграции.
 WELL_KNOWN = {
-    "auth-fitness-app": ("auth-app", "http://127.0.0.1:8000/actuator/health", '"status":"UP"', "service"),
-    "notification-fitness": ("notification-app", "http://127.0.0.1:8082/actuator/health", '"status":"UP"', "service"),
-    "manage-fitness-service": ("manage-app", "http://127.0.0.1:8083/actuator/health", '"status":"UP"', "service"),
-    "fitness-frontend": ("frontend", "http://127.0.0.1:3000/health", "healthy", "service"),
-    "decision-service": ("decision-app", "http://127.0.0.1:8084/actuator/health", '"status":"UP"', "service"),
-    "telegram-queue-gateway": ("telegram-gateway", "http://127.0.0.1:8086/health", '"status":"UP"', "service"),
-    "webpush-python-service": ("push-gateway", "http://127.0.0.1:8087/health", '"status":"UP"', "service"),
+    "auth-fitness-app": ("auth-app", "http://127.0.0.2:8000/actuator/health", '"status":"UP"', "service"),
+    "notification-fitness": ("notification-app", "http://127.0.0.2:8082/actuator/health", '"status":"UP"', "service"),
+    "manage-fitness-service": ("manage-app", "http://127.0.0.2:8083/actuator/health", '"status":"UP"', "service"),
+    "fitness-frontend": ("frontend", "http://127.0.0.2:3000/health", "healthy", "service"),
+    "decision-service": ("decision-app", "http://127.0.0.2:8084/actuator/health", '"status":"UP"', "service"),
+    "telegram-queue-gateway": ("telegram-gateway", "http://127.0.0.2:8086/health", '"status":"UP"', "service"),
+    "webpush-python-service": ("push-gateway", "http://127.0.0.2:8087/health", '"status":"UP"', "service"),
+    "import-worker": ("import-worker", "http://127.0.0.2:8090/health", '"status":"UP"', "service"),
     "accumulate-queue": ("liquibase-authdb liquibase-notifdb", "", "", "infra"),
 }
 

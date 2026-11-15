@@ -8,7 +8,8 @@
 #   CLONE_DIR    — каталог клона репо на этом сервере (обязательно)
 #   COMPOSE_DIR  — каталог umbrella docker-compose (по умолч. /opt/accumulate-queue)
 #   SERVICE      — compose-сервис(ы), через пробел; пусто только с MODE=infra-refs
-#   MODE         — service (build + recreate) | infra (up -d --build)
+#   MODE         — service (blue-green через deploy-bg.sh после миграции прода;
+#                  до неё — build + force-recreate) | infra (up -d --build)
 #   HEALTH_URL   — если пусто, health-check пропускается
 #   HEALTH_GREP  — подстрока/паттерн для grep в ответе health
 #   GITHUB_TOKEN — PAT (scope: repo) для приватных репо; без него fetch идёт
@@ -67,11 +68,24 @@ if [ "$MODE" = "infra" ]; then
   docker compose up -d --build $SERVICE
 else
   [ -n "$SERVICE" ] || die "SERVICE не задан (для инфраструктурного репо укажите MODE=infra)"
-  say "==> docker compose build + up: $SERVICE"
-  # shellcheck disable=SC2086
-  docker compose build $SERVICE
-  # shellcheck disable=SC2086
-  docker compose up -d --no-deps --force-recreate $SERVICE
+  # Zero-downtime blue-green: если прод мигрирован (см. accumulate-queue
+  # scripts/migrate-to-bg.sh), деплой идёт через deploy-bg.sh: сборка в
+  # лимитированном buildkitd → старт неактивного цвета → health-check →
+  # атомарное переключение роутера. Трафик на старом образе до полного успеха.
+  # До миграции (нет state-файла/скрипта) — прежний путь force-recreate.
+  BG="$COMPOSE_DIR/scripts/deploy-bg.sh"
+  if [ -x "$BG" ] && [ -f "$COMPOSE_DIR/.deploy/state.env" ]; then
+    for svc in $SERVICE; do
+      say "==> blue-green deploy: $svc"
+      bash "$BG" deploy "$svc" || die "blue-green деплой $svc провален (трафик остался на прежнем образе; см. лог deploy-bg.sh выше)"
+    done
+  else
+    say "==> docker compose build + up (legacy, не мигрировано на blue-green): $SERVICE"
+    # shellcheck disable=SC2086
+    docker compose build $SERVICE
+    # shellcheck disable=SC2086
+    docker compose up -d --no-deps --force-recreate $SERVICE
+  fi
 fi
 
 # ── 3) Health ───────────────────────────────────────────────────────────────

@@ -48,6 +48,7 @@ WELL_KNOWN = {
     "telegram-queue-gateway": ("telegram-gateway", "http://127.0.0.2:8086/health", '"status":"UP"', "service"),
     "webpush-python-service": ("push-gateway", "http://127.0.0.2:8087/health", '"status":"UP"', "service"),
     "import-worker": ("import-worker", "http://127.0.0.2:8090/health", '"status":"UP"', "service"),
+    "transport-scanner": ("transport-scanner", "http://127.0.0.2:8091/health", '"status":"UP"', "service"),
     "accumulate-queue": ("liquibase-authdb liquibase-notifdb", "", "", "infra"),
 }
 
